@@ -13,15 +13,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRoles {
+  user
+  moderator
+  admin
+}
+
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
+  id         String    @id @default(uuid()) @db.Uuid
   name       String
-  email      String   @unique
-  username   String   @unique
+  email      String    @unique
+  username   String    @unique
   password   String
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  role       UserRoles @default(user)
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 
   @@index([email])
   @@index([username])

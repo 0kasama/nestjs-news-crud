@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateUserDtoType } from './dto/user.dto';
 import { User } from '@prisma/client';
+import { hashPassword } from '../utils/bcrypt';
 
 @Injectable()
 export class UserService {
@@ -9,8 +10,30 @@ export class UserService {
 
   async createUser(userData: CreateUserDtoType): Promise<User> {
     try {
+      const { email, username, password } = userData;
+
+      const checkUser = await this.prismaService.user.findUnique({
+        where: { email },
+      });
+
+      const checkUsername = await this.prismaService.user.findUnique({
+        where: { username },
+      });
+
+      if (checkUser || checkUsername) {
+        throw new NotFoundException(`User already exists`);
+      }
+
+      const hashedPassword = hashPassword(password);
+      const payload = new CreateUserDtoType(
+        userData.username,
+        userData.email,
+        userData.name,
+        hashedPassword,
+      );
+
       return await this.prismaService.user.create({
-        data: userData,
+        data: payload,
       });
     } catch (e) {
       throw e;
@@ -53,9 +76,15 @@ export class UserService {
         throw new NotFoundException(`User not found`);
       }
 
+      const updateData = { ...userData };
+
+      if (updateData.password) {
+        updateData.password = hashPassword(updateData.password);
+      }
+
       return await this.prismaService.user.update({
         where: { id },
-        data: userData,
+        data: updateData,
       });
     } catch (e) {
       throw e;
