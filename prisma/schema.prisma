@@ -29,8 +29,31 @@ model User {
   is_active  Boolean   @default(true)
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
+  Post       Post[]
 
   @@index([email])
   @@index([username])
   @@map("users")
+}
+
+enum PostStatus {
+  draft
+  published
+  archived
+}
+
+model Post {
+  id          String     @id @default(uuid()) @db.Uuid
+  user        User       @relation(fields: [author_id], references: [id])
+  author_id   String     @db.Uuid
+  title       String
+  description String?
+  slug        String
+  tag         Json?      @default("[]")
+  status      PostStatus @default(draft)
+  content     Json       @default("[]")
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  @@map("posts")
 }
